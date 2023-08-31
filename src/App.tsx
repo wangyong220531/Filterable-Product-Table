@@ -24,11 +24,33 @@ function ProductCategoryRow({ category }) {
     )
 }
 
+function ProductRow({product}) {
+    return (<></>)
+}
+
 function SearcBar() {
-    return <></>
+    return (
+        <form>
+            <input type="text" placeholder="Search..." />
+            <label>
+                <input type="checkbox" />
+                {""}
+                仅展示库存里的商品
+            </label>
+        </form>
+    )
 }
 
 function ProductTable({ products }) {
+    const rows = []
+    let lastCategory = null
+
+    products.forEach((product: Product) => {
+        if (product.category !== lastCategory) {
+            rows.push(<ProductCategoryRow category={product.category} key={product.category}/>)
+            rows.push(<ProductRow product={undefined}/>)
+        }
+    })
     return <></>
 }
 
