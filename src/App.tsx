@@ -1,13 +1,7 @@
+import { ReactNode, useState } from "react"
 import "./App.css"
 
-interface Product {
-    category: string
-    price: string
-    stocked: boolean
-    name: string
-}
-
-const products = [
+const PRODUCTS = [
     { category: "Fruits", price: "$1", stocked: true, name: "Apple" },
     { category: "Fruits", price: "$1", stocked: true, name: "Dragonfruit" },
     { category: "Fruits", price: "$2", stocked: false, name: "Passionfruit" },
@@ -16,7 +10,26 @@ const products = [
     { category: "Vegetables", price: "$1", stocked: true, name: "Peas" }
 ]
 
-function ProductCategoryRow({ category }) {
+interface Product {
+    category: string
+    price: string
+    stocked: boolean
+    name: string
+}
+
+function FilterableProductTable({ products }: { products: Product[] }) {
+    const [filterText, setFilterText] = useState("")
+    const [inStockOnly, setInStockOnly] = useState(false)
+
+    return (
+        <div className="container">
+            <SearchBar filterText={filterText} inStockOnly={inStockOnly} onFilterTextChange={setFilterText} onInStockOnlyChange={setInStockOnly} />
+            <ProductTable products={products} filterText={filterText} inStockOnly={inStockOnly} />
+        </div>
+    )
+}
+
+function ProductCategoryRow({ category }: { category: string }) {
     return (
         <tr>
             <th colSpan={2}>{category}</th>
@@ -24,47 +37,74 @@ function ProductCategoryRow({ category }) {
     )
 }
 
-function ProductRow({product}) {
-    return (<></>)
+function ProductRow({ product }: { product: Product }) {
+    const name = product.stocked ? product.name : <span style={{ color: "red" }}>{product.name}</span>
+
+    return (
+        <tr>
+            <td>{name}</td>
+            <td>{product.price}</td>
+        </tr>
+    )
 }
 
-function SearcBar() {
+interface ProductTableProps {
+    products: Product[]
+    filterText: string
+    inStockOnly: boolean
+}
+
+function ProductTable(props: ProductTableProps) {
+    const { products, filterText, inStockOnly } = props
+    const rows: ReactNode[] = []
+    let lastCategory: string | null = null
+
+    products.forEach(product => {
+        if (product.name.toLowerCase().indexOf(filterText.toLowerCase()) === -1) {
+            return
+        }
+        if (inStockOnly && !product.stocked) {
+            return
+        }
+        if (product.category !== lastCategory) {
+            rows.push(<ProductCategoryRow category={product.category} key={product.category} />)
+        }
+        rows.push(<ProductRow product={product} key={product.name} />)
+        lastCategory = product.category
+    })
+
     return (
-        <form>
-            <input type="text" placeholder="Search..." />
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
+            <tbody>{rows}</tbody>
+        </table>
+    )
+}
+
+interface SearchBarProps {
+    filterText: string
+    inStockOnly: boolean
+    onFilterTextChange: (e: string) => void
+    onInStockOnlyChange: (e: boolean) => void
+}
+
+function SearchBar({ filterText, inStockOnly, onFilterTextChange, onInStockOnlyChange }: SearchBarProps) {
+    return (
+        <form className="search-bar">
+            <input type="text" value={filterText} placeholder="Search..." onChange={e => onFilterTextChange(e.target.value)} />
             <label>
-                <input type="checkbox" />
-                {""}
+                <input type="checkbox" checked={inStockOnly} onChange={e => onInStockOnlyChange(e.target.checked)}/>
                 仅展示库存里的商品
             </label>
         </form>
     )
 }
 
-function ProductTable({ products }) {
-    const rows = []
-    let lastCategory = null
-
-    products.forEach((product: Product) => {
-        if (product.category !== lastCategory) {
-            rows.push(<ProductCategoryRow category={product.category} key={product.category}/>)
-            rows.push(<ProductRow product={undefined}/>)
-        }
-    })
-    return <></>
+export default function App() {
+    return <FilterableProductTable products={PRODUCTS}/>
 }
-
-function FilterableProductTable({ products }: { products: Product[] }) {
-    return (
-        <div>
-            <SearcBar />
-            <ProductTable products={products} />
-        </div>
-    )
-}
-
-function App() {
-    return <FilterableProductTable products={products} />
-}
-
-export default App
